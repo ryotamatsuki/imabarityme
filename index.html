@@ -84,12 +84,13 @@
     <script>
       mapboxgl.accessToken = 'pk.eyJ1IjoiYnVkb3RvIiwiYSI6ImNtMDI4YnByNjFuNjYyanNmdXMzNHVvdnkifQ.FzJuyAndS1cOfzz3vLxv4w';
 
-      const map = new mapboxgl.Map({
-        container: 'map', // container id
-        style: 'mapbox://styles/mapbox/streets-v12', // stylesheet
-        center: [132.9775349355826, 34.11025077374635], // updated starting position [lng, lat]
-        zoom: 11.5 // starting zoom
-      });
+const map = new mapboxgl.Map({
+  container: 'map', // container id
+  style: 'mapbox://styles/mapbox/streets-v12', // stylesheet
+  center: [132.9775349355826, 34.11025077374635], // 修正: 新しい起点 [lng, lat]
+  zoom: 11.5 // starting zoom
+});
+
 
       // 観光地のデータ
       const touristSpots = [
