@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Demo: Get started with the Isochrone API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Mapbox GL JS -->
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <!-- Mapbox Assembly -->
+    <link
+      href="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .label {
+        font-size: 12px;
+        color: black;
+        background-color: transparent; /* 背景を透明に設定 */
+        padding: 2px;
+        white-space: nowrap; /* テキストが折り返されないように設定 */
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <div class="absolute fl my24 mx24 py24 px24 bg-gray-faint round">
+      <form id="params">
+        <h4 class="txt-m txt-bold mb6">Choose a travel mode:</h4>
+        <div class="mb12 mr12 toggle-group align-center">
+          <label class="toggle-container">
+            <input name="profile" type="radio" value="walking" />
+            <div class="toggle toggle--active-null toggle--null">Walking</div>
+          </label>
+          <label class="toggle-container">
+            <input name="profile" type="radio" value="cycling" checked />
+            <div class="toggle toggle--active-null toggle--null">Cycling</div>
+          </label>
+          <label class="toggle-container">
+            <input name="profile" type="radio" value="driving" />
+            <div class="toggle toggle--active-null toggle--null">Driving</div>
+          </label>
+        </div>
+        <h4 class="txt-m txt-bold mb6">Choose a maximum duration:</h4>
+        <div class="mb12 mr12 toggle-group align-center">
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="10" checked />
+            <div class="toggle toggle--active-null toggle--null">10 min</div>
+          </label>
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="20" />
+            <div class="toggle toggle--active-null toggle--null">20 min</div>
+          </label>
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="30" />
+            <div class="toggle toggle--active-null toggle--null">30 min</div>
+          </label>
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="60" />
+            <div class="toggle toggle--active-null toggle--null">1 h</div>
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      mapboxgl.accessToken = 'pk.eyJ1IjoiYnVkb3RvIiwiYSI6ImNtMDI4YnByNjFuNjYyanNmdXMzNHVvdnkifQ.FzJuyAndS1cOfzz3vLxv4w';
+
+      const map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v12', // stylesheet
+        center: [132.9754803661864, 34.115043041888676], // updated starting position [lng, lat]
+        zoom: 11.5 // starting zoom
+      });
+
+      // 観光地のデータ
+      const touristSpots = [
+        { name: '今治城', coords: [133.0067602078265, 34.063613526869446] },
+        { name: 'タオル美術館', coords: [133.0327371507752, 33.96914589496023] },
+        { name: '野間馬ハイランド', coords: [132.95327448266443, 34.05967193348681] },
+        { name: '延命寺', coords: [132.96400026417973, 34.06685105505165] },
+        { name: '亀老山展望公園', coords: [133.03346622709526, 34.11993046393794] },
+        { name: '大山祇神社', coords: [133.00571516732813, 34.24810411275274] },
+        { name: '来島海峡大橋', coords: [132.99935593726366, 34.12074694483994] },
+        { name: '開山公園', coords: [133.06513578511831, 34.2292457315776] },
+        { name: '村上海賊ミュージアム', coords: [133.08764697284747, 34.16896662402124] },
+        { name: '今治市伊東豊雄建築ミュージアム', coords: [132.95047665813394, 34.21388598291646] }
+      ];
+
+      // Target the params form in the HTML
+      const params = document.getElementById('params');
+
+      // Create variables to use in getIso()
+      const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
+      const lon = 132.9754803661864; // updated longitude
+      const lat = 34.115043041888676; // updated latitude
+      let profile = 'cycling';
+      let minutes = 10;
+
+      // Set up a marker that you can use to show the query's coordinates
+      const marker = new mapboxgl.Marker({
+        'color': '#314ccd'
+      });
+
+      // Create a LngLat object to use in the marker initialization
+      // https://docs.mapbox.com/mapbox-gl-js/api/#lnglat
+      const lngLat = {
+        lon: lon,
+        lat: lat
+      };
+
+      // 観光地のマーカーとラベルを追加
+      touristSpots.forEach(spot => {
+        const el = document.createElement('div');
+        el.className = 'marker';
+        el.style.backgroundColor = 'red';
+        el.style.width = '10px';
+        el.style.height = '10px';
+        el.style.borderRadius = '50%';
+
+        new mapboxgl.Marker(el)
+          .setLngLat(spot.coords)
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setText(spot.name)) // マーカーにポップアップを追加
+          .addTo(map);
+
+        // ラベルを追加
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = spot.name;
+
+        new mapboxgl.Marker({
+          element: label,
+          anchor: 'left' // ラベルをポイントの右側に配置
+        })
+          .setLngLat(spot.coords)
+          .setOffset([15, 0]) // ポイントからの距離を設定
+          .addTo(map);
+      });
+
+      // Create a function that sets up the Isochrone API query then makes a fetch call
+      async function getIso() {
+        try {
+          const query = await fetch(
+            `${urlBase}${profile}/${lon},${lat}?contours_minutes=${minutes}&polygons=true&access_token=${mapboxgl.accessToken}`,
+            { method: 'GET' }
+          );
+          if (!query.ok) {
+            throw new Error(`API request failed with status ${query.status}`);
+          }
+          const data = await query.json();
+          // Set the 'iso' source's data to what's returned by the API query
+          map.getSource('iso').setData(data);
+        } catch (error) {
+          console.error('Error fetching Isochrone data:', error);
+          alert('Isochrone data could not be retrieved. Please check the console for details.');
+        }
+      }
+
+      // When a user changes the value of profile or duration by clicking a button, change the parameter's value and make the API query again
+      params.addEventListener('change', (event) => {
+        if (event.target.name === 'profile') {
+          profile = event.target.value;
+        } else if (event.target.name === 'duration') {
+          minutes = parseInt(event.target.value, 10); // 修正: 数値を整数として扱うためにparseIntを使用
+        }
+        console.log(`Selected duration: ${minutes} minutes`); // デバッグ用ログ
+        getIso();
+      });
+
+      map.on('load', () => {
+        // When the map loads, add the source and layer
+        map.addSource('iso', {
+          type: 'geojson',
+          data: {
+            'type': 'FeatureCollection',
+            'features': []
+          }
+        });
+
+        map.addLayer(
+          {
+            'id': 'isoLayer',
+            'type': 'fill',
+            'source': 'iso',
+            'layout': {},
+            'paint': {
+              'fill-color': '#5a3fc0',
+              'fill-opacity': 0.3
+            }
+          },
+          'poi-label'
+        );
+
+        // Initialize the marker at the query coordinates
+        marker.setLngLat(lngLat).addTo(map);
+
+        // Make the API call
+        getIso();
+      });
+    </script>
+  </body>
+</html>
