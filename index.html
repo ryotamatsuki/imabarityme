@@ -109,12 +109,13 @@ const map = new mapboxgl.Map({
       // Target the params form in the HTML
       const params = document.getElementById('params');
 
-      // Create variables to use in getIso()
-      const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
-      const lon = 132.9775349355826; // updated longitude
-      const lat = 34.11025077374635; // updated latitude
-      let profile = 'cycling';
-      let minutes = 10;
+// Create variables to use in getIso()
+const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
+const lon = 132.9775349355826; // 修正: 新しい経度
+const lat = 34.11025077374635; // 修正: 新しい緯度
+let profile = 'cycling';
+let minutes = 10;
+
 
       // Set up a marker that you can use to show the query's coordinates
       const marker = new mapboxgl.Marker({
