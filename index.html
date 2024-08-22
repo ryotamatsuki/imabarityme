@@ -36,6 +36,18 @@
         padding: 2px;
         white-space: nowrap; /* テキストが折り返されないように設定 */
       }
+
+      #reset-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        background-color: #314ccd;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
     </style>
   </head>
 
@@ -81,16 +93,23 @@
       </form>
     </div>
 
+    <!-- Reset button -->
+    <button id="reset-button">Reset to Initial Position</button>
+
     <script>
       mapboxgl.accessToken = 'pk.eyJ1IjoiYnVkb3RvIiwiYSI6ImNtMDI4YnByNjFuNjYyanNmdXMzNHVvdnkifQ.FzJuyAndS1cOfzz3vLxv4w';
 
-const map = new mapboxgl.Map({
-  container: 'map', // container id
-  style: 'mapbox://styles/mapbox/streets-v12', // stylesheet
-  center: [132.9775349355826, 34.11025077374635], // 修正: 新しい起点 [lng, lat]
-  zoom: 11.5 // starting zoom
-});
+      const initialLon = 132.9775349355826;
+      const initialLat = 34.11025077374635;
+      let lon = initialLon;
+      let lat = initialLat;
 
+      const map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v12', // stylesheet
+        center: [lon, lat], // 修正: 新しい起点 [lng, lat]
+        zoom: 11.5 // starting zoom
+      });
 
       // 観光地のデータ
       const touristSpots = [
@@ -109,25 +128,18 @@ const map = new mapboxgl.Map({
       // Target the params form in the HTML
       const params = document.getElementById('params');
 
-// Create variables to use in getIso()
-const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
-const lon = 132.9775349355826; // 修正: 新しい経度
-const lat = 34.11025077374635; // 修正: 新しい緯度
-let profile = 'cycling';
-let minutes = 10;
-
+      // Create variables to use in getIso()
+      const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
+      let profile = 'cycling';
+      let minutes = 10;
 
       // Set up a marker that you can use to show the query's coordinates
-      const marker = new mapboxgl.Marker({
-        'color': '#314ccd'
-      });
-
-      // Create a LngLat object to use in the marker initialization
-      // https://docs.mapbox.com/mapbox-gl-js/api/#lnglat
-      const lngLat = {
-        lon: lon,
-        lat: lat
-      };
+      const originA = new mapboxgl.Marker({
+        draggable: true,
+        color: '#314ccd' // マーカーの色を設定
+      })
+        .setLngLat([lon, lat]) // 初期位置にマーカーを配置
+        .addTo(map);
 
       // 観光地のマーカーとラベルを追加
       touristSpots.forEach(spot => {
@@ -212,9 +224,27 @@ let minutes = 10;
         );
 
         // Initialize the marker at the query coordinates
-        marker.setLngLat(lngLat).addTo(map);
+        originA.setLngLat([lon, lat]).addTo(map);
 
         // Make the API call
+        getIso();
+      });
+
+      // When the point is moved, refresh the isochrones
+      function onDragEndA() {
+        const lngLat = originA.getLngLat();
+        lon = lngLat.lng;
+        lat = lngLat.lat;
+        getIso();
+      }
+
+      originA.on("dragend", onDragEndA);
+
+      // Reset marker to initial position
+      document.getElementById('reset-button').addEventListener('click', () => {
+        lon = initialLon;
+        lat = initialLat;
+        originA.setLngLat([lon, lat]).addTo(map);
         getIso();
       });
     </script>
